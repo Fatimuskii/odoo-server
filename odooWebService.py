@@ -21,65 +21,108 @@ print('\n-------------------------')
 models = xmlrpclib.ServerProxy('{}/xmlrpc/2/object'.format(url))
 
 # List records
-# ********************************************** List Customers **********************************************
-count = 0
-print("List of customers in TimeLoop: \n")
-listOfCustomers = models.execute_kw(db, uid, password,
-    'res.partner', 'search',
-    [[['customer', '=', True]]])
+# # ********************************************** List Customers **********************************************
+# count = 0
+# print("List of customers in TimeLoop: \n")
+# listOfCustomers = models.execute_kw(db, uid, password,
+#     'res.partner', 'search',
+#     [[['customer', '=', True]]])
 
-    # Options
-    # ['is_company', '=', True], ['customer', '=', True] -> Si es customer o company
-    # {'offset': 10, 'limit': 5} -> filtra el número de resultados
-    # search_count -> número de clientes
+#     # Options
+#     # ['is_company', '=', True], ['customer', '=', True] -> Si es customer o company
+#     # {'offset': 10, 'limit': 5} -> filtra el número de resultados
+#     # search_count -> número de clientes
 
-customer_info = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfCustomers],
- {'fields': ['id', 'name']})
-
-
-for partner in customer_info:
-    print(partner)
-    count+=1
-print('\n-------------------------')
-#************************************************************************************************************
-
-#********************************************** List Companies **********************************************
-print("List of companies in TimeLoop: \n")
-
-listOfCustomers = models.execute_kw(db, uid, password,
-    'res.partner', 'search',
-    [[['is_company', '=', True]]])
-
-customer_info = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfCustomers],
- {'fields': ['id', 'name']})
+# customer_info = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfCustomers],
+#  {'fields': ['id', 'name']})
 
 
-for partner in customer_info:
-    print(partner)
-    count+=1
-print('\n-------------------------')
-print("Total contacts: ", count)
-print('\n-------------------------')
+# for partner in customer_info:
+#     print(partner)
+#     count+=1
+# print('\n-------------------------')
+# #************************************************************************************************************
 
-#************************************************************************************************************
-#********************************************** List Products **********************************************
-print("List of products in TimeLoop: \n")
+# #********************************************** List Companies **********************************************
+# print("List of companies in TimeLoop: \n")
 
-listOfCustomers = models.execute_kw(db, uid, password,
-    'product.template', 'search',
+# listOfCustomers = models.execute_kw(db, uid, password,
+#     'res.partner', 'search',
+#     [[['is_company', '=', True]]])
+
+# customer_info = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfCustomers],
+#  {'fields': ['id', 'name']})
+
+
+# for partner in customer_info:
+#     print(partner)
+#     count+=1
+# print('\n-------------------------')
+# print("Total contacts: ", count)
+# print('\n-------------------------')
+
+# #***********************************************************************************************************
+# #********************************************** List Products **********************************************
+# print("List of products in TimeLoop: \n")
+
+# listOfProducts = models.execute_kw(db, uid, password,
+#     'product.template', 'search',
+#     [[['categ_id','=',4]]])
+
+
+# products_info = models.execute_kw(db, uid, password, 'product.template', 'read', [listOfProducts],
+#  {'fields': ['id', 'name', 'list_price']})
+
+# for product in products_info:
+#     print(product)
+
+# print('\n-------------------------')
+# #*********************************************************************************************************
+# #********************************************** List Events **********************************************
+
+# print("List of tournaments in TimeLoop: \n")
+
+# listOfEvents = models.execute_kw(db, uid, password,
+#     'product.template', 'search',
+#     [[['categ_id','=',5]]])
+
+
+# events_info = models.execute_kw(db, uid, password, 'product.template', 'read', [listOfEvents],
+#  {'fields': ['id', 'name', 'list_price']})
+
+# for event in events_info:
+#     print(event)
+
+# print('\n-------------------------')
+
+
+# count_p = models.execute_kw(db, uid, password,
+#     'product.template', 'search_count',
+#     [[]])
+# print('\n-------------------------')
+# print("Total products and events: ", count_p)
+# print('\n-------------------------')
+# #*********************************************************************************************************
+#********************************************** List Events **********************************************
+
+print("Sale orders: \n")
+
+listOfSales = models.execute_kw(db, uid, password,
+    'sale.order', 'search',
     [[]])
 
-customer_info = models.execute_kw(db, uid, password, 'product.template', 'read', [listOfCustomers],
- {'fields': ['id', 'name']})
+sales_info = models.execute_kw(db, uid, password, 'sale.order', 'read', [listOfSales],
+{'fields': ['name','product_id','date_order','warehouse_id','state','cart_quantity','amount_total']})
 
 
-for partner in customer_info:
-    print(partner)
-    count+=1
-print('\n-------------------------')
-# print("Total contacts: ", count)
+
+for sale in sales_info:
+    print(sale)
 print('\n-------------------------')
 
+#*********************************************************************************************************
+
+ 
 
 # # Read records
 # partner_records = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfContacts],
