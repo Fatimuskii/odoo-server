@@ -4,63 +4,78 @@ import xmlrpc.client as xmlrpclib
 
 # Configuration
 url = "http://localhost:8069"
-db = 'TimeLoop'
+db = 'TimeLoop13'
 username = 'anaalava@ucm.es'
 password = '0d00sg3'
 
 
 # Logging in
-print("Connecting to Odoo...")
-common = xmlrpclib.ServerProxy('{}/xmlrpc/2/common'.format(url))
-version = common.version()
-uid = common.authenticate(db, username, password, {})
+def login():
+    print("Connecting to Odoo...")
+    common = xmlrpclib.ServerProxy('{}/xmlrpc/2/common'.format(url))
+    version = common.version()
+    uid = common.authenticate(db, username, password, {})
 
-print("Connection was successful with version: ", version)
-print('\n-------------------------')
+    print("Connection was successful with version: ", version)
+    #print('\n-------------------------')
 
-models = xmlrpclib.ServerProxy('{}/xmlrpc/2/object'.format(url))
+    models = xmlrpclib.ServerProxy('{}/xmlrpc/2/object'.format(url))
+    return models, uid
+modelos, uid=login()
 
-# List records
-# # ********************************************** List Customers **********************************************
-# count = 0
-# print("List of customers in TimeLoop: \n")
-# listOfCustomers = models.execute_kw(db, uid, password,
-#     'res.partner', 'search',
-#     [[['customer', '=', True]]])
+#List records
+# ********************************************** List Customers **********************************************
+def listCustomersCompanies(models, uid):
+    retorno="---CUSTOMERS---\n"
+    retorno+="ID      NAME"+'\n'
+    count = 0
+    # print("List of customers in TimeLoop: \n")
+    listOfCustomers = models.execute_kw(db, uid, password,
+        'res.partner', 'search',
+        [[['customer', '=', True]]])
 
-#     # Options
-#     # ['is_company', '=', True], ['customer', '=', True] -> Si es customer o company
-#     # {'offset': 10, 'limit': 5} -> filtra el número de resultados
-#     # search_count -> número de clientes
+        # Options
+        # ['is_company', '=', True], ['customer', '=', True] -> Si es customer o company
+        # {'offset': 10, 'limit': 5} -> filtra el número de resultados
+        # search_count -> número de clientes
 
-# customer_info = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfCustomers],
-#  {'fields': ['id', 'name']})
-
-
-# for partner in customer_info:
-#     print(partner)
-#     count+=1
-# print('\n-------------------------')
-# #************************************************************************************************************
-
-# #********************************************** List Companies **********************************************
-# print("List of companies in TimeLoop: \n")
-
-# listOfCustomers = models.execute_kw(db, uid, password,
-#     'res.partner', 'search',
-#     [[['is_company', '=', True]]])
-
-# customer_info = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfCustomers],
-#  {'fields': ['id', 'name']})
+    customer_info = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfCustomers],
+    {'fields': ['id', 'name']})
 
 
-# for partner in customer_info:
-#     print(partner)
-#     count+=1
-# print('\n-------------------------')
-# print("Total contacts: ", count)
-# print('\n-------------------------')
+    for partner in customer_info:
+        #print(partner['name'])
+        retorno+=str(partner['id'])+" ==> "+partner['name']+'\n'
+        count+=1
+    #print('\n-------------------------')
+    #************************************************************************************************************
 
+    #********************************************** List Companies **********************************************
+    # print("List of companies in TimeLoop: \n")
+    retorno+="---COMPANIES---\n"
+    retorno+="ID      NAME"+'\n'
+
+    listOfCustomers = models.execute_kw(db, uid, password,
+        'res.partner', 'search',
+        [[['is_company', '=', True]]])
+
+    customer_info = models.execute_kw(db, uid, password, 'res.partner', 'read', [listOfCustomers],
+    {'fields': ['id', 'name']})
+
+
+    for partner in customer_info:
+        retorno+=str(partner['id'])+" ==> "+partner['name']+'\n'
+        count+=1
+    
+    #print(retorno)
+    # print('\n-------------------------')
+    # print("Total contacts: ", count)
+    # print('\n-------------------------')
+    return retorno
+
+
+a=listCustomersCompanies(modelos, uid)
+print(a)
 # #***********************************************************************************************************
 # #********************************************** List Products **********************************************
 # print("List of products in TimeLoop: \n")
@@ -150,19 +165,19 @@ models = xmlrpclib.ServerProxy('{}/xmlrpc/2/object'.format(url))
 # }])
 #print("Newly Created ID is:", newContact)
 
-# # Delete records
-models.execute_kw(db, uid, password, 'res.partner', 'unlink', [[25]])
-# check if the deleted record is still in the database
-models.execute_kw(db, uid, password,
-    'res.partner', 'search', [[['id', '=', 25]]])
+# # # Delete records
+# models.execute_kw(db, uid, password, 'res.partner', 'unlink', [[25]])
+# # check if the deleted record is still in the database
+# models.execute_kw(db, uid, password,
+#     'res.partner', 'search', [[['id', '=', 25]]])
 
 
-# # Update records
-models.execute_kw(db, uid, password, 'product.template', 'write', [[18], {
-    'list_price': "15"
-}])
-# get record name after having changed it
-models.execute_kw(db, uid, password, 'product.template', 'name_get', [[18]])
+# # # Update records
+# models.execute_kw(db, uid, password, 'product.template', 'write', [[18], {
+#     'list_price': "15"
+# }])
+# # get record name after having changed it
+# models.execute_kw(db, uid, password, 'product.template', 'name_get', [[18]])
 
 
 # ------------------------------------------------ XAMP Database ------------------------------------------------
