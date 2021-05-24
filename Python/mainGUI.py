@@ -151,6 +151,7 @@ class Interface:
         result=""
         if query=="Contacts":
             result, listContacts= self.listCustomersCompanies()
+            print(listContacts)
             if result and len(listContacts)>0:
                 res = self.createUsersOnXampp(listContacts)
                 if res==True:
@@ -218,8 +219,14 @@ class Interface:
 
                 print("You're connected to database. ")
             for elem in listOfUsers:
-                insert="INSERT INTO contacts(id, name, type) VALUES('{0}','{1}','{2}');".format(elem['id'], elem['name'], elem['is_company'])
-                cursor.execute(insert)
+                data_contact= {
+                    'id': elem['id'],
+                    'name': elem['name'],
+                    'type': True
+                }
+                print(data_contact)
+                insert="(INSERT INTO contacts(id, name, type) VALUES(%s,%s,'%s'))"
+                cursor.execute(insert, data_contact)
 
             saveOk= True
 
