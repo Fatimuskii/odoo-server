@@ -78,62 +78,63 @@ a=listCustomersCompanies(modelos, uid)
 print(a)
 # #***********************************************************************************************************
 # #********************************************** List Products **********************************************
-# print("List of products in TimeLoop: \n")
 
-# listOfProducts = models.execute_kw(db, uid, password,
-#     'product.template', 'search',
-#     [[['categ_id','=',4]]])
-
-
-# products_info = models.execute_kw(db, uid, password, 'product.template', 'read', [listOfProducts],
-#  {'fields': ['id', 'name', 'list_price']})
-
-# for product in products_info:
-#     print(product)
-
-# print('\n-------------------------')
-# #*********************************************************************************************************
-# #********************************************** List Events **********************************************
-
-# print("List of tournaments in TimeLoop: \n")
-
-# listOfEvents = models.execute_kw(db, uid, password,
-#     'product.template', 'search',
-#     [[['categ_id','=',5]]])
+def listProducts(models, uid):
+    retorno="---PRODUCTS---\n"
+    retorno+="ID     PRODUCT     PRICE"+'\n'
+    listOfProducts = models.execute_kw(db, uid, password,
+        'product.template', 'search',
+        [[['categ_id','=',4]]])
 
 
-# events_info = models.execute_kw(db, uid, password, 'product.template', 'read', [listOfEvents],
-#  {'fields': ['id', 'name', 'list_price']})
+    products_info = models.execute_kw(db, uid, password, 'product.template', 'read', [listOfProducts],
+    {'fields': ['id', 'name', 'list_price']})
 
-# for event in events_info:
-#     print(event)
+    for product in products_info:
+        retorno+=str(product['id'])+" ==> "+product['name']+" == " +str(product['list_price'])+'\n'
 
-# print('\n-------------------------')
+    #*********************************************************************************************************
+    #********************************************** List Events **********************************************
+    retorno+="---COMPANIES---\n"
+    retorno+="ID     PRODUCT     PRICE"+'\n'
+    listOfEvents = models.execute_kw(db, uid, password,
+        'product.template', 'search',
+        [[['categ_id','=',5]]])
 
 
-# count_p = models.execute_kw(db, uid, password,
-#     'product.template', 'search_count',
-#     [[]])
-# print('\n-------------------------')
-# print("Total products and events: ", count_p)
-# print('\n-------------------------')
+    events_info = models.execute_kw(db, uid, password, 'product.template', 'read', [listOfEvents],
+    {'fields': ['id', 'name', 'list_price']})
+
+    for event in events_info:
+        retorno+=str(event['id'])+" ==> "+event['name']+" == " +str(event['list_price'])+'\n'
+
+    return retorno
+
+print(listProducts(modelos, uid))
 # #*********************************************************************************************************
 #********************************************** List Events **********************************************
 
 # print("Sale orders: \n")
 
-#listOfSales = models.execute_kw(db, uid, password,
-#    'sale.order', 'search',
-#    [[]])
+def listSales(models, uid):
+    retorno="---PRODUCTS---\n"
+    retorno+="NAME     PRODUCT ID     DATE     WAREHOUSE ID     STATE     CART QUANTITY     AMOUNT"+'\n'
+    listOfSales = models.execute_kw(db, uid, password,
+       'sale.order', 'search',
+       [[]])
 
-#sales_info = models.execute_kw(db, uid, password, 'sale.order', 'read', [listOfSales],
-#{'fields': ['name','product_id','date_order','warehouse_id','state','cart_quantity','amount_total']})
+    sales_info = models.execute_kw(db, uid, password, 'sale.order', 'read', [listOfSales],
+    {'fields': ['name','product_id','date_order','warehouse_id','state','cart_quantity','amount_total']})
 
 
 
-#for sale in sales_info:
-#    print(sale)
-#print('\n-------------------------')
+    for sale in sales_info:
+       retorno+=str(sale['name'])+"  "+str(sale['product_id'])+"  " +str(sale['date_order'])+"  "+str(sale['warehouse_id'])+"  "+str(sale['state'])+"  " +str(sale['cart_quantity'])+"  " +str(sale['amount_total'])+'\n'
+
+    
+    return retorno
+
+print(listSales(modelos, uid))
 
 
 #*********************************************************************************************************
