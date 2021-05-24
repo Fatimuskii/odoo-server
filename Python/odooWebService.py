@@ -105,20 +105,21 @@ models = xmlrpclib.ServerProxy('{}/xmlrpc/2/object'.format(url))
 # #*********************************************************************************************************
 #********************************************** List Events **********************************************
 
-print("Sale orders: \n")
+# print("Sale orders: \n")
 
-listOfSales = models.execute_kw(db, uid, password,
-    'sale.order', 'search',
-    [[]])
+#listOfSales = models.execute_kw(db, uid, password,
+#    'sale.order', 'search',
+#    [[]])
 
-sales_info = models.execute_kw(db, uid, password, 'sale.order', 'read', [listOfSales],
-{'fields': ['name','product_id','date_order','warehouse_id','state','cart_quantity','amount_total']})
+#sales_info = models.execute_kw(db, uid, password, 'sale.order', 'read', [listOfSales],
+#{'fields': ['name','product_id','date_order','warehouse_id','state','cart_quantity','amount_total']})
 
 
 
-for sale in sales_info:
-    print(sale)
-print('\n-------------------------')
+#for sale in sales_info:
+#    print(sale)
+#print('\n-------------------------')
+
 
 #*********************************************************************************************************
 
@@ -143,11 +144,25 @@ print('\n-------------------------')
 #     print(partnersr)
 
 
-# # Create records
-# newContact = models.execute_kw(db, uid, password, 'res.partner', 'create', [{
+ # Create records
+#newContact = models.execute_kw(db, uid, password, 'res.partner', 'create', [{
 #     'name': "Walter Melon",
 # }])
-# print("Newly Created ID is:", newContact)
+#print("Newly Created ID is:", newContact)
+
+# # Delete records
+models.execute_kw(db, uid, password, 'res.partner', 'unlink', [[25]])
+# check if the deleted record is still in the database
+models.execute_kw(db, uid, password,
+    'res.partner', 'search', [[['id', '=', 25]]])
+
+
+# # Update records
+models.execute_kw(db, uid, password, 'product.template', 'write', [[18], {
+    'list_price': "15"
+}])
+# get record name after having changed it
+models.execute_kw(db, uid, password, 'product.template', 'name_get', [[18]])
 
 
 # ------------------------------------------------ XAMP Database ------------------------------------------------
