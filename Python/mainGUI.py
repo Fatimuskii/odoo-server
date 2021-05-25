@@ -1,30 +1,52 @@
-from tkinter import Button, StringVar, Tk, Text, Label, Entry, END
-from tkinter.constants import ACTIVE
+from tkinter import Button, DoubleVar, Scrollbar, StringVar, Tk, Text, Label, Entry, END, Checkbutton, IntVar, scrolledtext
+from tkinter.constants import RIGHT
+from decimal import Decimal
+import xmlrpc.client as xmlrpclib
+import mysql.connector
+from mysql.connector import Error
+
+# ------------------------------------------------ Odoo Database ------------------------------------------------
+
+# Configuration
+url = "http://localhost:8069"
+db = 'TimeLoop'
+username = 'anaalava@ucm.es'
+password = '0d00sg3'
 
 NUM_QUERIES =["Contacts", "Products","Sales"]
-#Contactos (Clientes + Compañias)
-#Productos (Productos y eventos)
-#Ventas
-
-#Controlar Contacts (CRUD)
-
-#Guardar datos en bbdd propia
-
-
-
 TITTLE= "Oddo Management"
 
+
+
+
+
 class Interface:
+
+    # Logging in
+    def login(self):
+        print("Connecting to Odoo...")
+        common = xmlrpclib.ServerProxy('{}/xmlrpc/2/common'.format(url))
+        version = common.version()
+        self.uid = common.authenticate(db, username, password, {})
+
+        print("Connection was successful with version: ", version)
+        #print('\n-------------------------')
+
+        self.models = xmlrpclib.ServerProxy('{}/xmlrpc/2/object'.format(url))
+        return
+
     def __init__(self, window):
-        #Inicializar la ventanta con un titulo
+        #Init window
+        self.login()
+
         self.window= window
         self.window.title(TITTLE)
-        self.window.geometry("400x400")
+        self.window.geometry("400x500")
 
         #Title
-        Label(self.window, text="Main queries", font="ar 15 bold").grid(row=0, column=3)
+        Label(self.window, text="- Time-Loop -", font="ar 16 bold").grid(row=0, column=3)
 
-        #Agregamos los botones
+        #Buttons sections
         buttons=[]
         for i in range(0,len(NUM_QUERIES)):
             btn = self.createButton(NUM_QUERIES[i])
@@ -33,36 +55,88 @@ class Interface:
         for i in range(0,len(buttons)):
             buttons[i].grid(row=i+1, column=2, padx=10, pady=10)
         
-        #Pantalla de resultados:
-        self.resultText=Text(window, state="disabled", width=20, height=10)
+        #Result text box
+        self.resultText=scrolledtext.ScrolledText(self.window, state="disabled", width=25, height=10)
         self.resultText.grid(row=1, column=3, columnspan=2, rowspan=4, padx=5, pady=5)
-        #variable String con el resultado:
         self.stringResQuery=""
 
         actualRow = len(NUM_QUERIES)+2
         
-         #SubQueries
-        Label(self.window, text="Create Contact", font="ar 14").grid(row=actualRow, column=2)
+        #SubQueries
+        #CREATE CONTACT
+        Label(self.window, text="Create Contact", font="ar 12 bold").grid(row=actualRow, column=2)
         actualRow=actualRow+1
-        name=Label(self.window, text="Name")
+        name=Label(self.window, text="Name:")
         name.grid(row=actualRow, column=2)
-        nameValue=StringVar
-        entryname= Entry(self.window, textvariable=nameValue)
-        entryname.grid(row=actualRow,column=3)
+        
+        nameValue=StringVar()
+        isCompanyValue= IntVar()
+
+        self.entryname= Entry(self.window, textvariable=nameValue)
+        self.entryname.grid(row=actualRow,column=3)
+        actualRow=actualRow+1
+        self.checkIsCompany= Checkbutton(self.window, text="Is company", variable=isCompanyValue)
+        self.checkIsCompany.grid(row=actualRow, column=2)
         actualRow=actualRow+1
 
-        btnCreateRecord = Button(text="Create record", command=lambda:self.createUser())
+        btnCreateRecord = Button(text="Create contact", font=('Sans','9','bold'), command=lambda:self.createUser(nameValue.get(),isCompanyValue.get()))
         btnCreateRecord.grid(row=actualRow, column=3)
+        actualRow=actualRow+1
+
+        #DELETE CONTACT
+        Label(self.window, text="Delete contact", font="ar 12 bold").grid(row=actualRow, column=2)
+        actualRow=actualRow+1
+
+        idContact=Label(self.window, text="Contact id:")
+        idContact.grid(row=actualRow, column=2)
+
+        idContactValue=StringVar()
+
+        self.entryIdContact=Entry(self.window, textvariable=idContactValue)
+        self.entryIdContact.grid(row=actualRow, column=3)
+        actualRow=actualRow+1
+
+        btnDeleteContact= Button(text="Delete contact", font=('Sans','9','bold'),command=lambda:self.deleteContact(idContactValue.get()))
+        btnDeleteContact.grid(row=actualRow, column=3)
+        actualRow=actualRow+1
+
+
+        #UPDATE PRICE OF PRODUCT
+        Label(self.window, text="Update Product", font="ar 12 bold").grid(row=actualRow, column=2)
+        actualRow=actualRow+1
+
+        idProductValue=StringVar()
+        newPriceValue=StringVar()
+
+        idProduct=Label(self.window, text="Product Id:")
+        idProduct.grid(row=actualRow, column=2)
+
+        self.entryIdProduct=Entry(self.window, textvariable=idProductValue)
+        self.entryIdProduct.grid(row=actualRow, column=3)
+
+        actualRow=actualRow+1
+        newPrice=Label(self.window, text="New price:")
+        newPrice.grid(row=actualRow, column=2)
+
+        self.entryNewPrice= Entry(self.window, textvariable=newPriceValue)
+        self.entryNewPrice.grid(row=actualRow, column=3)
+        actualRow= actualRow+1
+
+        btnUpdateProduct= Button(text="Update price", font=('Sans','9','bold'),command=lambda:self.updatePrice(idProductValue.get(), newPriceValue.get()))
+        btnUpdateProduct.grid(row=actualRow, column=3)
+        actualRow=actualRow+1
         return
 
+    #OPERATIONS 
     def createButton(self, nameBtn,width=15, height=2 ):
-        return Button(self.window, text=nameBtn, width=width, height=height, command=lambda:self.click(nameBtn))
+        return Button(self.window, text=nameBtn,font=('Sans','10','bold'), width=width, height=height, command=lambda:self.click(nameBtn))
     
     #Result text options
     def writeResult(self, result):
-        self.resultText.configure(state="normal")
-        self.resultText.insert(END, result)
-        self.resultText.configure(state="disabled")
+        if result:
+            self.resultText.configure(state="normal")
+            self.resultText.insert(END, result)
+            self.resultText.configure(state="disabled")
         return
     
     def cleanResult(self):
@@ -71,7 +145,7 @@ class Interface:
         self.resultText.configure(state="disabled")
         return
 
-    #Buttons options
+    # Buttons options
     def click(self, query):
         print("Button selected for: ", query)
         result=""
@@ -243,10 +317,25 @@ class Interface:
             print("You must write a proper name for new customer/company")
         return 
 
-    def createUser(self):
-        print("New contact: ")
-        return 
+    def deleteContact(self, idContact):
+        if idContact.isdigit():
+            print("Delete contact with id: ", idContact)
 
+        else:
+            print("You must write a id for delete record")
+
+        self.entryIdContact.delete("0", END)
+        return 
+    
+    def updatePrice(self, idProduct, newPrice):
+        if idProduct.isdigit() and Decimal(newPrice):
+            print("Update price of product with id: ", idProduct, " and new price: ",newPrice )
+        else: 
+            print("You must write a proper id and/or price for updating a product")
+
+        self.entryIdProduct.delete("0", END)
+        self.entryNewPrice.delete("0", END)
+        return
 
 
 mainwindow= Tk()
