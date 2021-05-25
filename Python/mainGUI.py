@@ -194,7 +194,7 @@ class Interface:
             [[['is_company', '=', True]]])
 
         customer_info = self.models.execute_kw(db, self.uid, password, 'res.partner', 'read', [listOfCustomers],
-        {'fields': ['id', 'name']})
+        {'fields': ['id', 'name', 'is_company']})
 
 
         for partner in customer_info:
@@ -205,7 +205,6 @@ class Interface:
 
     def createUsersOnXampp(self, listOfUsers):
         
-        saveOk=False
         try:
             connection = mysql.connector.connect(host='localhost',
                                                 database='odoo',
@@ -218,30 +217,29 @@ class Interface:
                 cursor.execute("TRUNCATE TABLE contacts")
 
                 print("You're connected to database. ")
-            for elem in listOfUsers:
-                data_contact= {
-                    'id': elem['id'],
-                    'name': elem['name'],
-                    'type': True
-                }
-                print(data_contact)
-                insert="(INSERT INTO contacts(id, name, type) VALUES(%s,%s,'%s'))"
-                cursor.execute(insert, data_contact)
-
-            saveOk= True
-
+                for elem in listOfUsers:
+                    data_contact= {
+                        'id': int(elem['id']),
+                        'name': elem['name'],
+                        'type': 1
+                    }
+                    print("Inserting data: ", data_contact)
+                    query="INSERT INTO contacts (id, name, type) VALUES (%(id)s,%(name)s,%(type)s);"
+                    cursor.execute(query, data_contact)
+                
+                connection.commit()
+                
         except Error as e:
             print("Error while connecting to MySQL", e)
+            return False
         finally:
             if connection.is_connected():
+                
                 cursor.close()
                 connection.close()
                 print("MySQL connection is closed")
-                return
+                return True
 
-
-        return saveOk
-    
     # --- CRUD Operations
     def createUser(self, name,isCompany):
         if name.isalpha():
