@@ -124,12 +124,12 @@ def listSales(models, uid):
        [[]])
 
     sales_info = models.execute_kw(db, uid, password, 'sale.order', 'read', [listOfSales],
-    {'fields': ['name','product_id','date_order','warehouse_id','state','cart_quantity','amount_total']})
+    {'fields': ['id','name','date_order','warehouse_id','state','cart_quantity','amount_total']})
 
 
 
     for sale in sales_info:
-       retorno+=str(sale['name'])+"  "+str(sale['product_id'])+"  " +str(sale['date_order'])+"  "+str(sale['warehouse_id'])+"  "+str(sale['state'])+"  " +str(sale['cart_quantity'])+"  " +str(sale['amount_total'])+'\n'
+       retorno+=str(sale['id'])+"  "+str(sale['name'])+"  " +str(sale['amount_total'])+'\n'
 
     
     return retorno
@@ -161,24 +161,30 @@ print(listSales(modelos, uid))
 
 
  # Create records
-#newContact = models.execute_kw(db, uid, password, 'res.partner', 'create', [{
-#     'name': "Walter Melon",
-# }])
-#print("Newly Created ID is:", newContact)
+def createRecord(models, uid, name):
+    newContact = models.execute_kw(db, uid, password, 'res.partner', 'create', [{
+        'name': name,
+    }])
+    print("Newly Created ID is:", newContact)
+    return newContact
 
 # # # Delete records
-# models.execute_kw(db, uid, password, 'res.partner', 'unlink', [[25]])
-# # check if the deleted record is still in the database
-# models.execute_kw(db, uid, password,
-#     'res.partner', 'search', [[['id', '=', 25]]])
+def deleteContact(models, uid, id):
+    models.execute_kw(db, uid, password, 'res.partner', 'unlink', [[id]])
+    # check if the deleted record is still in the database
+    models.execute_kw(db, uid, password,
+        'res.partner', 'search', [[['id', '=', id]]])
+    return
 
 
 # # # Update records
-# models.execute_kw(db, uid, password, 'product.template', 'write', [[18], {
-#     'list_price': "15"
-# }])
-# # get record name after having changed it
-# models.execute_kw(db, uid, password, 'product.template', 'name_get', [[18]])
+def updateContact(models, uid, id, list_price):
+    models.execute_kw(db, uid, password, 'product.template', 'write', [[id], {
+        'list_price': list_price
+    }])
+    # get record name after having changed it
+    models.execute_kw(db, uid, password, 'product.template', 'name_get', [[id]])
+    return
 
 
 # ------------------------------------------------ XAMP Database ------------------------------------------------
