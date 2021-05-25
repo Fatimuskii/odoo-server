@@ -1,3 +1,4 @@
+from os import write
 from tkinter import Button, DoubleVar, Scrollbar, StringVar, Tk, Text, Label, Entry, END, Checkbutton, IntVar, scrolledtext
 from tkinter.constants import RIGHT
 from decimal import Decimal
@@ -9,7 +10,7 @@ from mysql.connector import Error
 
 # Configuration
 url = "http://localhost:8069"
-db = 'TimeLoop13'
+db = 'TimeLoop'
 username = 'anaalava@ucm.es'
 password = '0d00sg3'
 
@@ -41,7 +42,7 @@ class Interface:
 
         self.window= window
         self.window.title(TITTLE)
-        self.window.geometry("400x500")
+        self.window.geometry("450x550")
 
         #Title
         Label(self.window, text="- Time-Loop -", font="ar 16 bold").grid(row=0, column=3)
@@ -56,12 +57,17 @@ class Interface:
             buttons[i].grid(row=i+1, column=2, padx=10, pady=10)
         
         #Result text box
-        self.resultText=scrolledtext.ScrolledText(self.window, state="disabled", width=25, height=10)
+        self.resultText=scrolledtext.ScrolledText(self.window, state="disabled", width=30, height=10)
         self.resultText.grid(row=1, column=3, columnspan=2, rowspan=4, padx=5, pady=5)
         self.stringResQuery=""
 
         actualRow = len(NUM_QUERIES)+2
         
+        #Label to put res of backups
+        self.statusLabel = Label(self.window, text="Status: ", font="ar 10 bold")
+        self.statusLabel.grid(row=actualRow, column=3)
+
+        actualRow=actualRow+1
         #SubQueries
         #CREATE CONTACT
         Label(self.window, text="Create Contact", font="ar 12 bold").grid(row=actualRow, column=2)
@@ -144,8 +150,19 @@ class Interface:
         self.resultText.configure(state="normal")
         self.resultText.delete("1.0", END)
         self.resultText.configure(state="disabled")
+        
         return
 
+    def writeStatusResult(self, result):
+        if result == True:
+            self.statusLabel.config(text="Status: CORRECT BACKUP")
+        else:
+            self.statusLabel.config(text="Status: ERROR ON BACKUP")
+        return
+
+    def cleanStatusResult(self):
+        self.statusLabel.config(text="Status: ")
+        return
     # Buttons options
     def click(self, query):
         print("Button selected for: ", query)
@@ -154,36 +171,27 @@ class Interface:
             result, listContacts= self.listCustomersCompanies()
             print(listContacts)
             if result and len(listContacts)>0:
-                res = self.createUsersOnXampp(listContacts)
-                if res==True:
-                    print("CORRECT BACKUP OF CONTACTS")
-                else:
-                    print("ERROR BACKUP OF CONTACTS")
-                
+                res = self.insertUsersOnXampp(listContacts) 
+                    
         elif query=="Products":
             result, listProducts= self.listProducts()
             print(listProducts)
-            # if result and len(listProducts)>0:
-            #     #res = self.createUsersOnXampp(listProducts)
-            #     if res==True:
-            #         print("CORRECT BACKUP OF PRODUCTS")
-            #     else:
-            #         print("ERROR BACKUP OF PRODUCTS")
+            if result and len(listProducts)>0:
+                res = self.insertProductsOnXampp(listProducts)
+
         elif query=="Sales":
             result, listSales= self.listSales()
             print(listSales)
-            # if result and len(listSales)>0:
-            #     #res = self.createUsersOnXampp(listSales)
-            #     # if res==True:
-            #     #     print("CORRECT BACKUP OF SALES")
-            #     # else:
-            #     #     print("ERROR BACKUP OF SALES")
+            if result and len(listSales)>0:
+                res = self.insertSalesOnXampp(listSales)
 
+        self.cleanStatusResult()  
+        self.writeStatusResult(res)
         self.cleanResult()
         self.writeResult(result)
         return 
 
-    # -- 3 MAIN QUERIES -- 
+    # -- 3 MAIN QUERIES -- ---------------------------------------------------------------------------------------
     def listCustomersCompanies(self):
         retorno="---CUSTOMERS---\n"
         retorno+="ID      NAME"+'\n'
@@ -201,7 +209,7 @@ class Interface:
             retorno+=str(partner['id'])+" ==> "+partner['name']+'\n'
             count+=1
     
-        retorno+="---COMPANIES---\n"
+        retorno+="\n---COMPANIES---\n"
         retorno+="ID      NAME"+'\n'
 
         listOfCustomers = self.models.execute_kw(db, self.uid, password,
@@ -229,11 +237,9 @@ class Interface:
         {'fields': ['id', 'name', 'list_price']})
 
         for product in products_info:
-            retorno+=str(product['id'])+" ==> "+product['name']+" == " +str(product['list_price'])+' €'+'\n'
+            retorno+=str(product['id'])+" - "+product['name']+" : " +str(product['list_price'])+' €'+'\n'
 
-        #*********************************************************************************************************
-        #********************************************** List Events **********************************************
-        retorno+="---EVENTS---\n"
+        retorno+="\n---EVENTS---\n"
         listOfEvents = self.models.execute_kw(db, self.uid, password,
             'product.template', 'search',
             [[['categ_id','=',5]]])
@@ -249,7 +255,6 @@ class Interface:
 
     def listSales(self):
         retorno="---PRODUCTS---\n"
-        retorno+="NAME     PRODUCT ID     DATE     WAREHOUSE ID     STATE     CART QUANTITY     AMOUNT"+'\n'
         listOfSales = self.models.execute_kw(db, self.uid, password,
         'sale.order', 'search',
         [[]])
@@ -257,15 +262,13 @@ class Interface:
         sales_info = self.models.execute_kw(db, self.uid, password, 'sale.order', 'read', [listOfSales],
         {'fields': ['id','name','date_order','warehouse_id','state','cart_quantity','amount_total']})
 
-
-
         for sale in sales_info:
             retorno+=str(sale['id'])+"  "+str(sale['name'])+"  " +str(sale['amount_total'])+'\n'
 
-        
-        return retorno
-
-    def createUsersOnXampp(self, listOfUsers):
+        return retorno, sales_info
+    ##------------------------------------------------------------------------------------------------------------
+    ## BACKUP METHODS ON XAMPP------------------------------------------------------------------------------------
+    def insertUsersOnXampp(self, listOfUsers):
         
         try:
             connection = mysql.connector.connect(host='localhost',
@@ -302,29 +305,114 @@ class Interface:
                 print("MySQL connection is closed")
                 return True
 
-    # --- CRUD Operations
+    #Backup Products on Xampp
+    def insertProductsOnXampp(self, listOfProducts):
+        
+        try:
+            connection = mysql.connector.connect(host='localhost',
+                                                database='odoo',
+                                                user='root',
+                                                password='')
+            if connection.is_connected():
+                db_Info = connection.get_server_info()
+                print("Connected to MySQL Server version ", db_Info)
+                cursor = connection.cursor()
+                cursor.execute("TRUNCATE TABLE products")
+
+                print("You're connected to database. ")
+                for elem in listOfProducts:
+                    data_product= {
+                        'id': int(elem['id']),
+                        'name': elem['name'],
+                        'price': float(elem['list_price'])
+                    }
+                    print("Inserting data: ", data_product)
+                    query="INSERT INTO products (id, name, price) VALUES (%(id)s,%(name)s,%(price)s);"
+                    cursor.execute(query, data_product)
+                
+                connection.commit()
+                
+        except Error as e:
+            print("Error while connecting to MySQL", e)
+            return False
+        finally:
+            if connection.is_connected():
+                
+                cursor.close()
+                connection.close()
+                print("MySQL connection is closed")
+                return True
+   #Backup Sales on Xampp
+    def insertSalesOnXampp(self, listOfSales):
+        
+        try:
+            connection = mysql.connector.connect(host='localhost',
+                                                database='odoo',
+                                                user='root',
+                                                password='')
+            if connection.is_connected():
+                db_Info = connection.get_server_info()
+                print("Connected to MySQL Server version ", db_Info)
+                cursor = connection.cursor()
+                cursor.execute("TRUNCATE TABLE sales")
+
+                print("You're connected to database. ")
+                for elem in listOfSales:
+                    data_sale= {
+                        'id': int(elem['id']),
+                        'name': elem['name'],
+                        'totalprice': float(elem['amount_total'])
+                    }
+                    print("Inserting data: ", data_sale)
+                    query="INSERT INTO sales (id, name, totalprice) VALUES (%(id)s,%(name)s,%(totalprice)s);"
+                    cursor.execute(query, data_sale)
+                
+                connection.commit()
+                
+        except Error as e:
+            print("Error while connecting to MySQL", e)
+            return False
+        finally:
+            if connection.is_connected():
+                
+                cursor.close()
+                connection.close()
+                print("MySQL connection is closed")
+                return True
+
+    # --- CRUD Operations--------------------------------------------------------------------
+    ## Create Query --------------------------------------------------------------------------
     def createUser(self, name, isCompany):
-        if name.isalpha():
+        res=""
+        if name:
             print("New contact with name: ", name, "and is company ",isCompany )
-            self.createRecord(name, isCompany)
+            res = self.createRecord(name, isCompany)
+            if res:
+                self.writeResult("Newly Created ID is:", res)
+            else: 
+                self.writeResult("Error creating new Contact")
             self.entryname.delete("0", END)
             self.checkIsCompany.deselect()
             
         else: 
-            print("You must write a proper name for new customer/company")
-        return
+            print("You must write a name for new customer/company")
+        return 
 
     def createRecord(self, name, isCompany):
         newContact = self.models.execute_kw(db, self.uid, password, 'res.partner', 'create', [{
             'name': name, 'is_company' : isCompany
         }])
-        print("Newly Created ID is:", newContact)
         return newContact 
-
+        
+    ## Delete Record---------------------------------------------------------------------------------
     def deleteContact(self, idContact):
+        ok=False
         if idContact.isdigit():
-            print("Delete contact with id: ", idContact)
-            self.deleteRecord(int(idContact))
+            res = self.deleteRecord(int(idContact))
+            if res:
+                self.writeResult("Error deleting contact with id: "+ idContact)
+            else:
+                self.writeResult("Delete contact with id: "+ idContact)
 
         else:
             print("You must write a id for delete record")
@@ -335,14 +423,20 @@ class Interface:
     def deleteRecord(self, id):
         self.models.execute_kw(db, self.uid, password, 'res.partner', 'unlink', [[id]])
         # check if the deleted record is still in the database
-        self.models.execute_kw(db, self.uid, password,
+        record = self.models.execute_kw(db, self.uid, password,
             'res.partner', 'search', [[['id', '=', id]]])
-        return 
+        return record
     
+    ## Update Product with a new Price:--------------------------
     def updatePrice(self, idProduct, newPrice):
+
         if idProduct.isdigit() and Decimal(newPrice):
             print("Update price of product with id: ", idProduct, " and new price: ",newPrice )
-            self.updateContact(int(idProduct), float(newPrice))
+            res = self.updatePriceRecord(int(idProduct), float(newPrice))
+            if res and res[0]== idProduct:
+                self.writeResult("Updated price of product with id: "+ idProduct) 
+            else:
+                self.writeResult("Error updating product with id:"+ idProduct)
         else: 
             print("You must write a proper id and/or price for updating a product")
 
@@ -350,15 +444,15 @@ class Interface:
         self.entryNewPrice.delete("0", END)
         return
     
-    def updateContact(self, id, list_price):
+    def updatePriceRecord(self, id, list_price):
         self.models.execute_kw(db, self.uid, password, 'product.template', 'write', [[id], {
             'list_price': list_price
         }])
         # get record name after having changed it
-        self.models.execute_kw(db, self.uid, password, 'product.template', 'name_get', [[id]])
-        return
+        record = self.models.execute_kw(db, self.uid, password, 'product.template', 'name_get', [[id]])
+        return record
 
-
+    ##---------------------------------------------------------------------
 mainwindow= Tk()
 odooServer=Interface(mainwindow)
 mainwindow.mainloop()
