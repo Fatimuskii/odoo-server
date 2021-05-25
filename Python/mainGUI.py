@@ -9,7 +9,7 @@ from mysql.connector import Error
 
 # Configuration
 url = "http://localhost:8069"
-db = 'TimeLoop'
+db = 'TimeLoop13'
 username = 'anaalava@ucm.es'
 password = '0d00sg3'
 
@@ -207,7 +207,7 @@ class Interface:
             'res.partner', 'search',
             [[['is_company', '=', True]]])
 
-        customer_info = self.models.execute_kw(db, self.uid, password, 'res.partner', 'read', [listOfCustomers],
+        company_info = self.models.execute_kw(db, self.uid, password, 'res.partner', 'read', [listOfCustomers],
         {'fields': ['id', 'name']})
 
 
@@ -215,7 +215,7 @@ class Interface:
             retorno+=str(partner['id'])+" ==> "+partner['name']+'\n'
             count+=1
 
-        return retorno, customer_info
+        return retorno, customer_info+company_info
 
     def listProducts(self):
         retorno="---PRODUCTS---\n"
@@ -246,7 +246,7 @@ class Interface:
         for event in events_info:
             retorno+=str(event['id'])+" ==> "+event['name']+" == " +str(event['list_price'])+'\n'
 
-        return retorno
+        return retorno, 
 
     def listSales(self):
         retorno="---PRODUCTS---\n"
