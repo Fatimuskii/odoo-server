@@ -97,6 +97,7 @@ class Interface:
         actualRow=actualRow+1
 
         btnDeleteContact= Button(text="Delete contact", font=('Sans','9','bold'),command=lambda:self.deleteContact(idContactValue.get()))
+
         btnDeleteContact.grid(row=actualRow, column=3)
         actualRow=actualRow+1
 
@@ -162,21 +163,21 @@ class Interface:
         elif query=="Products":
             result, listProducts= self.listProducts()
             print(listProducts)
-            if result and len(listProducts)>0:
-                res = self.createUsersOnXampp(listProducts)
-                if res==True:
-                    print("CORRECT BACKUP OF PRODUCTS")
-                else:
-                    print("ERROR BACKUP OF PRODUCTS")
+            # if result and len(listProducts)>0:
+            #     #res = self.createUsersOnXampp(listProducts)
+            #     if res==True:
+            #         print("CORRECT BACKUP OF PRODUCTS")
+            #     else:
+            #         print("ERROR BACKUP OF PRODUCTS")
         elif query=="Sales":
             result, listSales= self.listSales()
             print(listSales)
-            if result and len(listSales)>0:
-                res = self.createUsersOnXampp(listSales)
-                if res==True:
-                    print("CORRECT BACKUP OF SALES")
-                else:
-                    print("ERROR BACKUP OF SALES")
+            # if result and len(listSales)>0:
+            #     #res = self.createUsersOnXampp(listSales)
+            #     # if res==True:
+            #     #     print("CORRECT BACKUP OF SALES")
+            #     # else:
+            #     #     print("ERROR BACKUP OF SALES")
 
         self.cleanResult()
         self.writeResult(result)
@@ -207,7 +208,7 @@ class Interface:
             'res.partner', 'search',
             [[['is_company', '=', True]]])
 
-        customer_info = self.models.execute_kw(db, self.uid, password, 'res.partner', 'read', [listOfCustomers],
+        company_info = self.models.execute_kw(db, self.uid, password, 'res.partner', 'read', [listOfCustomers],
         {'fields': ['id', 'name', 'is_company']})
 
 
@@ -219,7 +220,6 @@ class Interface:
 
     def listProducts(self):
         retorno="---PRODUCTS---\n"
-        retorno+="ID     PRODUCT     PRICE"+'\n'
         listOfProducts = self.models.execute_kw(db, self.uid, password,
             'product.template', 'search',
             [[['categ_id','=',4]]])
@@ -229,12 +229,11 @@ class Interface:
         {'fields': ['id', 'name', 'list_price']})
 
         for product in products_info:
-            retorno+=str(product['id'])+" ==> "+product['name']+" == " +str(product['list_price'])+'\n'
+            retorno+=str(product['id'])+" ==> "+product['name']+" == " +str(product['list_price'])+' €'+'\n'
 
         #*********************************************************************************************************
         #********************************************** List Events **********************************************
-        retorno+="---COMPANIES---\n"
-        retorno+="ID     PRODUCT     PRICE"+'\n'
+        retorno+="---EVENTS---\n"
         listOfEvents = self.models.execute_kw(db, self.uid, password,
             'product.template', 'search',
             [[['categ_id','=',5]]])
@@ -244,9 +243,9 @@ class Interface:
         {'fields': ['id', 'name', 'list_price']})
 
         for event in events_info:
-            retorno+=str(event['id'])+" ==> "+event['name']+" == " +str(event['list_price'])+'\n'
+            retorno+=str(event['id'])+" ==> "+event['name']+" == " +str(event['list_price'])+' €'+'\n'
 
-        return retorno, 
+        return retorno, products_info+events_info
 
     def listSales(self):
         retorno="---PRODUCTS---\n"
@@ -304,35 +303,59 @@ class Interface:
                 return True
 
     # --- CRUD Operations
-    def createUser(self, name,isCompany):
+    def createUser(self, name, isCompany):
         if name.isalpha():
             print("New contact with name: ", name, "and is company ",isCompany )
-            #TODO llamada a funcion que crea
+            self.createRecord(name, isCompany)
             self.entryname.delete("0", END)
             self.checkIsCompany.deselect()
             
         else: 
             print("You must write a proper name for new customer/company")
-        return 
+        return
+
+    def createRecord(self, name, isCompany):
+        newContact = self.models.execute_kw(db, self.uid, password, 'res.partner', 'create', [{
+            'name': name, 'is_company' : isCompany
+        }])
+        print("Newly Created ID is:", newContact)
+        return newContact 
 
     def deleteContact(self, idContact):
         if idContact.isdigit():
             print("Delete contact with id: ", idContact)
+            self.deleteRecord(int(idContact))
 
         else:
             print("You must write a id for delete record")
 
         self.entryIdContact.delete("0", END)
+        return
+
+    def deleteRecord(self, id):
+        self.models.execute_kw(db, self.uid, password, 'res.partner', 'unlink', [[id]])
+        # check if the deleted record is still in the database
+        self.models.execute_kw(db, self.uid, password,
+            'res.partner', 'search', [[['id', '=', id]]])
         return 
     
     def updatePrice(self, idProduct, newPrice):
         if idProduct.isdigit() and Decimal(newPrice):
             print("Update price of product with id: ", idProduct, " and new price: ",newPrice )
+            self.updateContact(int(idProduct), float(newPrice))
         else: 
             print("You must write a proper id and/or price for updating a product")
 
         self.entryIdProduct.delete("0", END)
         self.entryNewPrice.delete("0", END)
+        return
+    
+    def updateContact(self, id, list_price):
+        self.models.execute_kw(db, self.uid, password, 'product.template', 'write', [[id], {
+            'list_price': list_price
+        }])
+        # get record name after having changed it
+        self.models.execute_kw(db, self.uid, password, 'product.template', 'name_get', [[id]])
         return
 
 
