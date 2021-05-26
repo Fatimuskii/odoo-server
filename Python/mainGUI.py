@@ -1,3 +1,4 @@
+from logging import NullHandler
 from os import write
 from tkinter import Button, DoubleVar, Scrollbar, StringVar, Tk, Text, Label, Entry, END, Checkbutton, IntVar, scrolledtext
 from tkinter.constants import RIGHT
@@ -16,9 +17,6 @@ password = '0d00sg3'
 
 NUM_QUERIES =["Contacts", "Products","Sales"]
 TITTLE= "Oddo Management"
-
-
-
 
 
 class Interface:
@@ -88,6 +86,7 @@ class Interface:
         btnCreateRecord = Button(text="Create contact", font=('Sans','9','bold'), command=lambda:self.createUser(nameValue.get(),isCompanyValue.get()))
         btnCreateRecord.grid(row=actualRow, column=3)
         actualRow=actualRow+1
+        
 
         #DELETE CONTACT
         Label(self.window, text="Delete contact", font="ar 12 bold").grid(row=actualRow, column=2)
@@ -212,15 +211,15 @@ class Interface:
         retorno+="\n---COMPANIES---\n"
         retorno+="ID      NAME"+'\n'
 
-        listOfCustomers = self.models.execute_kw(db, self.uid, password,
+        listOfCompanies = self.models.execute_kw(db, self.uid, password,
             'res.partner', 'search',
             [[['is_company', '=', True]]])
 
-        company_info = self.models.execute_kw(db, self.uid, password, 'res.partner', 'read', [listOfCustomers],
+        company_info = self.models.execute_kw(db, self.uid, password, 'res.partner', 'read', [listOfCompanies],
         {'fields': ['id', 'name', 'is_company']})
 
 
-        for partner in customer_info:
+        for partner in company_info:
             retorno+=str(partner['id'])+" ==> "+partner['name']+'\n'
             count+=1
 
@@ -254,7 +253,7 @@ class Interface:
         return retorno, products_info+events_info
 
     def listSales(self):
-        retorno="---PRODUCTS---\n"
+        retorno="---SALES---\n"
         listOfSales = self.models.execute_kw(db, self.uid, password,
         'sale.order', 'search',
         [[]])
@@ -388,7 +387,7 @@ class Interface:
             print("New contact with name: ", name, "and is company ",isCompany )
             res = self.createRecord(name, isCompany)
             if res:
-                self.writeResult("Newly Created ID is:", res)
+                self.writeResult("Newly Created ID is:"+ res)
             else: 
                 self.writeResult("Error creating new Contact")
             self.entryname.delete("0", END)
@@ -399,9 +398,16 @@ class Interface:
         return 
 
     def createRecord(self, name, isCompany):
-        newContact = self.models.execute_kw(db, self.uid, password, 'res.partner', 'create', [{
-            'name': name, 'is_company' : isCompany
-        }])
+        newContact = ''
+        if isCompany == 1:
+            newContact = self.models.execute_kw(db, self.uid, password, 'res.partner', 'create', [{
+                'name': name, 'is_company' : True
+            }])
+        else:
+            newContact = self.models.execute_kw(db, self.uid, password, 'res.partner', 'create', [{
+                'name': name, 'customer' : True
+            }])
+
         return newContact 
         
     ## Delete Record---------------------------------------------------------------------------------
